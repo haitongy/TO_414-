@@ -1,7 +1,7 @@
 ---
-title: "Project 2"
+title: "Project 2 Intermediate Deliverable 1 "
 author: "Group 15 Analysts R Us"
-date: "2/23/2022"
+date: "2/25/2022"
 output: html_document
 ---
 
@@ -9,3 +9,59 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Part 1 Data Set Introduction
+
+We found our data set in the Kaggle data base.According to the information from Kaggle, we know that the data set is originally from the National Institute of Diabetes and Digestive and Kidney Diseases.The diagnostic, binary-valued variable investigated is whether the patient shows signs of diabetes according to World Health Organization criteria and all of the patients in this data set lives near Phoenix, Arizona, USA. 
+
+Let us first load the data set. 
+```{r}
+diabetes <- read.csv("diabetes.csv")
+summary(diabetes)
+str(diabetes)
+```
+There are a total of 9 columns in the data set:
+`Pregnancies`: Number of times pregnant
+`Glucose`: Plasma glucose concentration a 2 hours in an oral glucose tolerance test
+`BloodPressure`: Diastolic blood pressure (mmHg)
+`SkinThickness`: Triceps skin fold thickness (mm)
+`Insulin`: 2-Hour serum insulin (mu U/ml)
+`BMI`: Body mass index (weight in kg/(height in m)^2)
+`DiabetesPedigreeFunction`: Diabetes pedigree function (a function which scores the likelihood of diabetes based on family history)
+`Age`: Age (years)
+`Outcome`: Class variable (0 or 1), this is also going tobe our response variable
+
+`Business Question` Does a patient have diabetes? 
+
+Throughout this project we will generate the best prediction model based on our data set: predict whether a person has diabetes with information about their number of times pregnant, glucose level, blood pressure, triceps skin fold thickness, insulin, BMI, diabetes pedigree function, and age. If we can predict diabetes based on the above information through a questionnaire, we can target people specifically with high risk of having diabetes if we are a company selling health supplements for diabetes prevention. 
+
+We will first clean the data 
+```{r}
+#convert number of pregnancy to factors
+diabetes$Pregnancies <- as.factor(diabetes$Pregnancies)
+#convert outcome to factors 
+diabetes$Outcome <- as.factor(diabetes$Outcome)
+#divide age into few categories: 21-30 as young adults, 31-45 adults, 46-59 old adults,60+ senior
+age_level <- function(x) {
+  if(x >= 21 & x <= 30 ) {
+    age_level <- "Young adult"
+  } else if(x > 30 & x <= 45) {
+    age_level <- "Adult"
+  } else if(x > 45 & x <= 59) {
+    age_level <- "Old adult"
+  } else {
+    age_level <- "Senior"
+  }
+  age_level
+}
+#create a new column in the data set called age level 
+#applying the age level function to the Age column
+diabetes$age_level <- sapply(diabetes$Age, FUN=age_level) 
+diabetes$age_level <- as.factor(diabetes$age_level)
+str(diabetes)
+summary(diabetes)
+```
+Now that we finished cleaning up the data, we are going to do some primary exploration on the cleaned data set before we start making and improving prediction models using ANN,kNN, and logistic regression. 
+```{r}
+
+
+```
