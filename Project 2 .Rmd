@@ -28,7 +28,7 @@ There are a total of 9 columns in the data set:
 `BMI`: Body mass index (weight in kg/(height in m)^2)
 `DiabetesPedigreeFunction`: Diabetes pedigree function (a function which scores the likelihood of diabetes based on family history)
 `Age`: Age (years)
-`Outcome`: Class variable (0 or 1), this is also going tobe our response variable
+`Outcome`: Class variable (0 or 1), this is also going to be our response variable
 
 `Business Question` Does a patient have diabetes? 
 
@@ -61,7 +61,34 @@ str(diabetes)
 summary(diabetes)
 ```
 Now that we finished cleaning up the data, we are going to do some primary exploration on the cleaned data set before we start making and improving prediction models using ANN,kNN, and logistic regression. 
+
+We will first explore the characteristics of people who are diabetic
+```{r}
+y <- diabetes[diabetes$Outcome == 1, ]
+
+summary(y$Glucose)
+summary(y$BloodPressure)
+summary(y$SkinThickness)
+summary(y$Insulin)
+summary(y$BMI)
+summary(y$Age)
+summary(as.numeric(y$Pregnancies))
+summary(as.numeric(y$DiabetesPedigreeFunction))
+```
+Based on the data, we can see that people with diabetes have glucose levels on average around 141.3, blood pressure around 70.82 mmHg, skin thickness around 22.16 mm, insulin level around 100.3 mu U/ml, BMI around 35.14, and around 37 years of age. The average number of times of pregnancy is around 5. The average score of the likelihood of diabetes based on family history is 0.55. Note that for blood pressure and skin thickness, the median is a lot greater than the mean, indicating that the distribution is negatively skewed, with extremely low values pulling the mean down. 
+
+Next we will explore the characteristics of people who are not diabetic
 ```{r}
 
+n <- diabetes[diabetes$Outcome == 0, ]
 
+summary(n$Glucose)
+summary(n$BloodPressure)
+summary(n$SkinThickness)
+summary(n$Insulin)
+summary(n$BMI)
+summary(n$Age)
+summary(as.numeric(n$Pregnancies))
+summary(as.numeric(n$DiabetesPedigreeFunction))
 ```
+Based on the data, we can see that people without diabetes have glucose levels on average around 110, blood pressure around 68.18 mmHg, skin sickness around 19.66 mm, insulin level around 68.79 mu U/ml, BMI around 30.3, and around 31 years of age. The average number of times of pregnancy is around 4. The average score of the likelihood of diabetes based on family history is 0.43. Note that for blood pressure and skin thickness, the median is greater than the mean, indicating that the distribution is negatively skewed, with extremely low values pulling the mean down. Also for insulin levels, the median is a lot lower than the mean, indicating that there are very extreme high values that pull the mean higher towards to right. The median for age is also lower than the mean, indicating there are people who are older than the majority. 
