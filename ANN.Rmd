@@ -1,0 +1,109 @@
+---
+title: "ANN"
+author: "Laurel Gu"
+date: "3/16/2022"
+output: html_document
+---
+
+```{r}
+diabetes_test_ANN <- read.csv("diabetes_test.csv")
+diabetes_train_ANN <- read.csv("diabetes_train.csv")
+
+diabetes_test_ANN$age_level<- as.factor(diabetes_test_ANN$age_level)
+diabetes_train_ANN$age_level <- as.factor(diabetes_train_ANN$age_level)
+diabetes_test_ANN$Age <- NULL
+diabetes_train_ANN$Age <- NULL
+
+# custom normalization function
+normalize <- function(x) { 
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+diabetes_test_ANN_dummy <- as.data.frame(model.matrix(~.-1,data = diabetes_test_ANN))
+diabetes_trian_ANN_dummy <- as.data.frame(model.matrix(~.-1,data = diabetes_train_ANN))
+
+# apply normalization to entire data frame
+diabetes_test_ANN_norm <- as.data.frame(lapply(diabetes_test_ANN_dummy, normalize))
+diabetes_train_ANN_norm <- as.data.frame(lapply(diabetes_trian_ANN_dummy, normalize))
+
+str(diabetes_test_ANN_norm)
+
+diabetes_train_ANN_labels <- diabetes_train_ANN$Outcome #the y variable of train data set 
+diabetes_test_ANN_labels <- diabetes_test_ANN$Outcome #the y variable of test data set
+```
+
+```{r}
+# train the neuralnet model
+library(neuralnet)
+
+# simple ANN with only a single hidden neuron
+diabetes_model <- neuralnet(formula = Outcome~.,
+                              data = diabetes_train_ANN_norm)
+
+
+# visualize the network topology
+plot(diabetes_model)
+```
+```{r}
+diabetes_test_ANN_predict <- predict(diabetes_model,diabetes_test_ANN_norm,type = "response")
+diabetes_test_ANN_predict <- ifelse(diabetes_test_ANN_predict > 0.5, 1, 0) #make it binary 
+
+
+library(gmodels)
+library(class)
+library(caret)
+CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict, prop.chisq=FALSE)
+
+# Confusion matrix for the first model 
+confusionMatrix(as.factor(diabetes_test_ANN_predict),as.factor(diabetes_test_ANN_labels), positive = "1")
+```
+```{r}
+# train the neuralnet model
+library(neuralnet)
+
+# simple ANN with only a single hidden neuron
+diabetes_model2 <- neuralnet(formula = Outcome~.,
+                              data = diabetes_train_ANN_norm,hidden = 2)
+
+
+# visualize the network topology
+plot(diabetes_model2)
+```
+```{r}
+diabetes_test_ANN_predict2 <- predict(diabetes_model2,diabetes_test_ANN_norm,type = "response")
+diabetes_test_ANN_predict2 <- ifelse(diabetes_test_ANN_predict2 > 0.5, 1, 0) #make it binary 
+
+
+library(gmodels)
+library(class)
+library(caret)
+CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict2, prop.chisq=FALSE)
+
+# Confusion matrix for the first model 
+confusionMatrix(as.factor(diabetes_test_ANN_predict2),as.factor(diabetes_test_ANN_labels), positive = "1")
+```
+```{r}
+# train the neuralnet model
+library(neuralnet)
+
+# simple ANN with only a single hidden neuron
+diabetes_model3 <- neuralnet(formula = Outcome~.,
+                              data = diabetes_train_ANN_norm,hidden = 10)
+
+
+# visualize the network topology
+plot(diabetes_model3)
+diabetes_test_ANN_predict3 <- predict(diabetes_model3,diabetes_test_ANN_norm,type = "response")
+diabetes_test_ANN_predict3 <- ifelse(diabetes_test_ANN_predict2 > 0.5, 1, 0) #make it binary 
+
+
+library(gmodels)
+library(class)
+library(caret)
+CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict3, prop.chisq=FALSE)
+
+# Confusion matrix for the first model 
+confusionMatrix(as.factor(diabetes_test_ANN_predict3),as.factor(diabetes_test_ANN_labels), positive = "1")
+
+```
+
