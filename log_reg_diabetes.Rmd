@@ -1,0 +1,44 @@
+---
+title: "log_reg_diabetes"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Get Data
+```{r}
+diabetes_train <- read.csv("diabetes_train.csv")
+diabetes_test <- read.csv("diabetes_test.csv")
+diabetes_train$Age <- NULL
+diabetes_test$Age <- NULL
+diabetes_train$age_level <- as.factor(diabetes_train$age_level)
+diabetes_test$age_level <- as.factor(diabetes_test$age_level)
+
+summary(diabetes_train)
+```
+## Build Full Logistic Model
+```{r}
+log_mod <- glm(diabetes_train$Outcome ~., data = diabetes_train, family=binomial(link="logit"))
+summary(log_mod)
+```
+## Logistic Model with Only Significant Variables
+```{r}
+sig_log_mod <- glm(diabetes_train$Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, family=binomial(link="logit"))
+summary(sig_log_mod)
+```
+## Evaluating Both Models
+```{r}
+full_mod_preds <- predict(log_mod, diabetes_test)
+full_mod_preds_bin <- ifelse(full_mod_preds > 0.5, 1, 0)
+
+sig_mod_preds <- predict(sig_log_mod, diabetes_test)
+sig_mod_preds_bin <- ifelse(sig_mod_preds > 0.5, 1, 0)
+
+library(gmodels)
+CrossTable(x = diabetes_test$Outcome, y = full_mod_preds_bin, props.chisq = FALSE)
+
+CrossTable(x = diabetes_test$Outcome, y = sig_mod_preds_bin, props.chisq = FALSE)
+```
+
