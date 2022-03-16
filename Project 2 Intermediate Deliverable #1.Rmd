@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Part 1 Data Set Introduction
+# Part 1 Data Set Introduction
 
 We found our data set in the Kaggle data base.According to the information from Kaggle, we know that the data set is originally from the National Institute of Diabetes and Digestive and Kidney Diseases.The diagnostic, binary-valued variable investigated is whether the patient shows signs of diabetes according to World Health Organization criteria and all of the patients in this data set lives near Phoenix, Arizona, USA. 
 
