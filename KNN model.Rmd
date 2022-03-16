@@ -1,0 +1,17 @@
+---
+title: "KNN model"
+author: "Haitong Yu"
+date: "3/16/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+diabetes_test <- read.csv("diabetes_test.csv")
+diabetes_train <- read.csv("diabetes_train.csv")
+
+
+```
