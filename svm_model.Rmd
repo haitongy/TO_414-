@@ -1,0 +1,34 @@
+---
+title: "svm_model"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Get Data
+```{r}
+diabetes_train <- read.csv("diabetes_train.csv")
+diabetes_test <- read.csv("diabetes_test.csv")
+diabetes_train$Age <- NULL
+diabetes_test$Age <- NULL
+diabetes_train$age_level <- as.factor(diabetes_train$age_level)
+diabetes_test$age_level <- as.factor(diabetes_test$age_level)
+
+summary(diabetes_train)
+```
+
+
+# Build SVM model
+```{r}
+library(kernlab)
+svm_mod <- ksvm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, kernel = "vanilladot", )
+svm_preds <- predict(svm_mod, diabetes_test)
+svm_preds <- ifelse(svm_preds > 0.5, 1, 0)
+
+
+library(gmodels)
+CrossTable(x = diabetes_test$Outcome, y = svm_preds, props.chisq = FALSE)
+```
+> The accuracy for this model is (97 + 28) / (97 + 28 + 8 + 21) = 81.17%.

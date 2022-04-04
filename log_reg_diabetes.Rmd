@@ -41,4 +41,4 @@ CrossTable(x = diabetes_test$Outcome, y = full_mod_preds_bin, props.chisq = FALS
 
 CrossTable(x = diabetes_test$Outcome, y = sig_mod_preds_bin, props.chisq = FALSE)
 ```
-
+> The accuracy for this model is 79.87%.
