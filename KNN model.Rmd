@@ -12,6 +12,86 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 diabetes_test <- read.csv("diabetes_test.csv")
 diabetes_train <- read.csv("diabetes_train.csv")
+#Get rid of the age column and make outcome and the age_level variables as factors
+diabetes_test$Age <- NULL
+diabetes_train$Age <- NULL 
+diabetes_test$Outcome <- as.factor(diabetes_test$Outcome)
+diabetes_train$Outcome <- as.factor(diabetes_train$Outcome)
+diabetes_test$age_level <- as.factor(diabetes_test$age_level)
+diabetes_train$age_level <- as.factor(diabetes_train$age_level)
 
-
+#convert the variables in both the test and train data set into dummy variables
+diabetes_test_d <- as.data.frame(model.matrix(~.-1,diabetes_test))
+str(diabetes_test_d)
+diabetes_train_d <- as.data.frame(model.matrix(~.-1,diabetes_train))
+str(diabetes_train_d)
 ```
+
+```{r}
+#Normalize the data 
+normalize <- function(x) {
+  return ((x-min(x)) / (max(x) - min(x)))
+}
+
+diabetes_test_n <- as.data.frame(lapply(diabetes_test_d, normalize))
+diabetes_train_n <- as.data.frame(lapply(diabetes_train_d, normalize))
+
+#Create labels 
+
+diabetes_test_label <- diabetes_test_n$Outcome1
+diabetes_train_label <- diabetes_train_n$Outcome1
+
+diabetes_test_n$Outcome1 <- NULL
+diabetes_test_n$Outcome0 <- NULL 
+diabetes_train_n$Outcome1 <- NULL
+diabetes_train_n$Outcome0 <- NULL
+```
+
+```{r}
+#Build the KNN model
+library(class)
+library(caret)
+k_value_1 <- sqrt(nrow(diabetes_train_n)) 
+knn_model_1 <- knn(train = diabetes_train_n, test = diabetes_test_n, cl = diabetes_train_label, k = k_value_1)
+
+#k_value_1
+
+#Evaluate model results
+library(gmodels)
+CrossTable(x=diabetes_test_label, y=knn_model_1, prop.chisq=FALSE)
+
+confusionMatrix(as.factor(knn_model_1), as.factor(diabetes_test_label), positive = "1")
+```
+
+
+```{r}
+#Build the KNN model
+library(class)
+library(caret)
+k_value_2 <- sqrt(nrow(diabetes_train_n)) + 8
+knn_model_2 <- knn(train = diabetes_train_n, test = diabetes_test_n, cl = diabetes_train_label, k = k_value_2)
+
+#k_value_2
+
+#Evaluate model results
+library(gmodels)
+CrossTable(x=diabetes_test_label, y=knn_model_2, prop.chisq=FALSE)
+
+confusionMatrix(as.factor(knn_model_2), as.factor(diabetes_test_label), positive = "1")
+```
+
+```{r}
+#Build the KNN model
+library(class)
+library(caret)
+k_value_3 <- sqrt(nrow(diabetes_train_n)) - 8
+knn_model_3 <- knn(train = diabetes_train_n, test = diabetes_test_n, cl = diabetes_train_label, k = k_value_3)
+
+#Evaluate model results
+library(gmodels)
+CrossTable(x=diabetes_test_label, y=knn_model_3, prop.chisq=FALSE)
+
+confusionMatrix(as.factor(knn_model_3), as.factor(diabetes_test_label), positive = "1")
+```
+
+We tried to produce the KNN Model by trying different K values. After evaluating the three models with k values ~ 25, 33, and 17, we found that k value 17 produces the highest accuracy rate (0.8052) and Kappa value (0.5306). The false positive rate is 10.5% and the false negative rate is 38.8%. This outcome is also better than the model with k value 25 (false positive: 12.4% & false negative: 42.9%) and k value 33 (false positive: 13.3% & false negative: 44.9%). This indicates that model 3 is the best in detecting false positives and false negatives as well. Overall, model 3 is the model that has the best performance. To apply this data into our diabetes diagnosis. False positive could be harmful as it could cause unnecessary anxiety and psychological distress for the healthy individuals. False negative could also be harmful as it provides a false sense of security and prevents patients from getting early treatment. Since model 3 has the lowest false positive and false negative rates, it's the best among all to prevent false positive and false negatives from happening. 
