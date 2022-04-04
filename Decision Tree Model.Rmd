@@ -1,0 +1,67 @@
+---
+title: "Decision Tree Model"
+author: "Haitong Yu"
+date: "4/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read train and test data set 
+```{r}
+diabetes_train <- read.csv("diabetes_train.csv")
+diabetes_test <- read.csv("diabetes_test.csv")
+```
+
+
+Convert the factors into dummy variables 
+```{r}
+diabetes_train_mm <-as.data.frame(model.matrix(~.-1,diabetes_train))
+str(diabetes_train_mm)
+diabetes_test_mm <- as.data.frame(model.matrix(~.-1,diabetes_test))
+str(diabetes_test_mm)
+```
+
+We are now going to create a decision tree model for predicting whether a person has diabetes or not using the train data that has been converted to dummy variables and we are going to use the decision tree model to predict the test data set. 
+```{r}
+#Load the library required 
+library(C50)
+tree_model <- C5.0(diabetes_train_mm[-9], as.factor(diabetes_train_mm$Outcome))
+tree_model_predict <- predict(tree_model,diabetes_test_mm)
+```
+Next, we are going to build a confusion matrix to examine the accuracy of prediction of diabetes by the decision tree model. 
+```{r}
+library(class)
+library(caret)
+library(gmodels)
+CrossTable(x = diabetes_test_mm$Outcome, y = tree_model_predict, props.chisq = FALSE)
+confusionMatrix(as.factor(tree_model_predict),as.factor(diabetes_test_mm$Outcome), positive = "1")
+```
+The false positive rate for the decision tree model is 36.5% (15/41), so 36.5% of patient that are predicted to have diabetes according to this model actually do not have diabetes. The false negative rate for the decision tree model is 20.35%(23/113), so 20.35% of people that are predicted to not have diabetes according to this model actually have diabetes. The overall accuracy rate of the decision tree model is 0.7532 and the kappa value of the model is 0.4054 which means an adequate agreement of the prediction of the results to the actual results compared to a randomly generated model. Overall, the decison tree model has an accuracy rate that is higher than pure chance (50% < 75.32%). However, the relatively high false positive rate and false negative rate of the model is a little concerning especially considering the purpose of our model is predcting a disease. Since false positive results lead to unnecessary stree for healthy people and potential cause of low sugar due to false insulin treatment and false negative results will lead to untreated diabetes that might develop further into more serious illnesses. 
+
+So now, let us attempt to improve our decision tree model by boosting it up with more trials 
+Let us first start with 10 trials. 
+```{r}
+tree_model_improve10 <- C5.0(diabetes_train_mm[-9], as.factor(diabetes_train_mm$Outcome), 
+                           trials = 10)
+tree_model_predict_improve10 <- predict(tree_model_improve10,diabetes_test_mm)
+```
+Now let us build a confusion matrix to examine the accuracy of the improved decision tree model. 
+```{r}
+CrossTable(x = diabetes_test_mm$Outcome, y = tree_model_predict_improve10, props.chisq = FALSE)
+confusionMatrix(as.factor(tree_model_predict_improve10),as.factor(diabetes_test_mm$Outcome), positive = "1")
+```
+Our attempt of improving the desion tree model with 10 trails failed since both the accuracy rate and the kappa value are even lower than the previous model. Instead, we are going to try 100 trials next. 
+```{r}
+tree_model_improve100 <- C5.0(diabetes_train_mm[-9], as.factor(diabetes_train_mm$Outcome), 
+                           trials = 100)
+tree_model_predict_improve100 <- predict(tree_model_improve100,diabetes_test_mm)
+```
+Now let us build a confusion matrix to examine the accuracy of the improved decision tree model. 
+```{r}
+CrossTable(x = diabetes_test_mm$Outcome, y = tree_model_predict_improve100, props.chisq = FALSE)
+confusionMatrix(as.factor(tree_model_predict_improve100),as.factor(diabetes_test_mm$Outcome), positive = "1")
+```
+The false positive rate of the improved decision tree model with 100 trials is 39.6% (19/48) (which is higher than the original model which is 36.5%) and the false negative rate of the model is 18.9% (20/106) (which is lower than the original model which is 20.35%). The kappa value of the improved model increased by less than 1% while the accuracy rate decreased by less than 1%. So overall, we are indifferent between the original and the improved decision tree model. The original model has a lower false positive rate while the improved model has a lower false negative rate. So in an application standpoint, using the original model to predict diabetes will more likely cause diabetes to be undetected and using the improved model to predict will more likely cause unnecessary anxiety for healthy people as they are falsely diagnosed with diabetes by the improved model. 
