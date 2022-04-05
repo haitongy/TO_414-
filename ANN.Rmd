@@ -4,28 +4,29 @@ author: "Laurel Gu"
 date: "3/16/2022"
 output: html_document
 ---
-
+#1.Import and clean dataset
 ```{r}
+#Read in the dataset
+diabetes_test <- read.csv("diabetes_test.csv")
+diabetes_train <- read.csv("diabetes_train.csv")
 
-diabetes_test_ANN <- read.csv("diabetes_test.csv")
-diabetes_train_ANN <- read.csv("diabetes_train.csv")
+#Clean dataset
+diabetes_test$age_level<- as.factor(diabetes_test$age_level)
+diabetes_train$age_level <- as.factor(diabetes_train$age_level)
+diabetes_test$Age <- NULL
+diabetes_train$Age <- NULL
 
-diabetes_test_ANN$age_level<- as.factor(diabetes_test_ANN$age_level)
-diabetes_train_ANN$age_level <- as.factor(diabetes_train_ANN$age_level)
-diabetes_test_ANN$Age <- NULL
-diabetes_train_ANN$Age <- NULL
-
-# custom normalization function
+# Normalizing train and test data
 normalize <- function(x) { 
   return((x - min(x)) / (max(x) - min(x)))
 }
 
-diabetes_test_ANN_dummy <- as.data.frame(model.matrix(~.-1,data = diabetes_test_ANN))
-diabetes_trian_ANN_dummy <- as.data.frame(model.matrix(~.-1,data = diabetes_train_ANN))
+diabetes_test_ANN_dummy <- as.data.frame(model.matrix(~.-1,data = diabetes_test))
+diabetes_train_ANN_dummy <- as.data.frame(model.matrix(~.-1,data = diabetes_train))
 
 # apply normalization to entire data frame
 diabetes_test_ANN_norm <- as.data.frame(lapply(diabetes_test_ANN_dummy, normalize))
-diabetes_train_ANN_norm <- as.data.frame(lapply(diabetes_trian_ANN_dummy, normalize))
+diabetes_train_ANN_norm <- as.data.frame(lapply(diabetes_train_ANN_dummy, normalize))
 
 str(diabetes_test_ANN_norm)
 
@@ -33,6 +34,7 @@ diabetes_train_ANN_labels <- diabetes_train_ANN$Outcome #the y variable of train
 diabetes_test_ANN_labels <- diabetes_test_ANN$Outcome #the y variable of test data set
 ```
 
+#2.Build ANN model
 ```{r}
 # train the neuralnet model
 library(neuralnet)
@@ -44,7 +46,11 @@ diabetes_model <- neuralnet(formula = Outcome~.,
 
 # visualize the network topology
 plot(diabetes_model)
+str(diabetes_model)
 ```
+From the plot, we can see pregnancies, glucose, blood pressure and etc are input variables, which are located on the left of the plot. The numbers on the black line that is pointing toward the center are weights of respective inputs.For example, 1.40599 is the weight of pregnancies in the model. The blue is the bias, which is summed with the weighted inputs to form the net inputs. Bias and weights are both adjustable parameters of the neuron. 
+
+#3.Predict outcome using Basic ANN model
 ```{r}
 diabetes_test_ANN_predict <- predict(diabetes_model,diabetes_test_ANN_norm,type = "response")
 diabetes_test_ANN_predict <- ifelse(diabetes_test_ANN_predict > 0.5, 1, 0) #make it binary 
@@ -58,6 +64,9 @@ CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict, prop.chi
 # Confusion matrix for the first model 
 confusionMatrix(as.factor(diabetes_test_ANN_predict),as.factor(diabetes_test_ANN_labels), positive = "1")
 ```
+From the confusion matrix, we can see that there are 27 false positive meaning there are 27 people who are not diabetes patient but the model predicted them to be diabetic. There are 10 false negative meaning that there are 10 people who actually got diabetes but the model did not predict them to be. From the business standpoint, we hope to reduce the false false negative number as much as possible since we do not want to miss the opportunity to help them prevent diabetes in advance. We can also see that the accuracy for this model is 0.7597 with kappa value of 0.4932. 
+
+#4. Improve ANN Model
 ```{r}
 # train the neuralnet model
 library(neuralnet)
@@ -70,6 +79,9 @@ diabetes_model2 <- neuralnet(formula = Outcome~.,
 # visualize the network topology
 plot(diabetes_model2)
 ```
+From the plot, we can see pregnancies, glucose, blood pressure and etc are input variables, which are located on the left of the plot. The numbers on the black line that is pointing toward the center are weights of respective inputs.In this model, we increase the number of hidden neutrons to 2. Therefore, we have two nodes before the outcome. This would help build a more complex model. The blue is the bias, which is summed with the weighted inputs to form the net inputs. Bias and weights are both adjustable parameters of the neuron. 
+
+#5.Predict outcome using Improved ANN model
 ```{r}
 diabetes_test_ANN_predict2 <- predict(diabetes_model2,diabetes_test_ANN_norm,type = "response")
 diabetes_test_ANN_predict2 <- ifelse(diabetes_test_ANN_predict2 > 0.5, 1, 0) #make it binary 
@@ -83,6 +95,9 @@ CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict2, prop.ch
 # Confusion matrix for the first model 
 confusionMatrix(as.factor(diabetes_test_ANN_predict2),as.factor(diabetes_test_ANN_labels), positive = "1")
 ```
+From the confusion matrix, we can see that there are 23 false positive meaning there are 23 people who are not diabetes patient but the model predicted them to be diabetic. This is improved from 27 false positive outcomes. There are 13 false negative meaning that there are 13 people who actually got diabetes but the model did not predict them to be. This is worse than the basic model which has 10 false negative outcomes. From the business standpoint, we hope to reduce the false false negative number as much as possible since we do not want to miss the opportunity to help them prevent diabetes in advance. We can also see that the accuracy for this model is 0.7662 with kappa value of 0.489. The accuracy for this improved model is higher than that of the basic one. 
+
+#6. Trying to build better ANN by increasing hidden neurons
 ```{r}
 # train the neuralnet model
 library(neuralnet)
@@ -107,4 +122,4 @@ CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict3, prop.ch
 confusionMatrix(as.factor(diabetes_test_ANN_predict3),as.factor(diabetes_test_ANN_labels), positive = "1")
 
 ```
-
+In this model, we tried to increase the hidden neutrons to 10 to see whether it would significantly improve the result. However, from the confusion matrix, we see that there are no difference between the model with 2 hidden neurons and the one with 10. Therefore, we concluded that no matter how many hidden neutrons we increase from 2, the result will always be the same. Thus, we are going to use the model with 2 hidden neurons. 
