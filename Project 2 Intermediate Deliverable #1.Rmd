@@ -1,5 +1,5 @@
 ---
-title: "Project 2 Intermediate Deliverable 1 "
+title: "Project 2 "
 author: "Group 15 Analysts R Us"
 date: "2/25/2022"
 output: html_document
@@ -101,3 +101,344 @@ summary(as.numeric(n$Pregnancies))
 summary(as.numeric(n$DiabetesPedigreeFunction))
 ```
 Based on the data, we can see that people without diabetes have glucose levels on average around 110, blood pressure around 68.18 mmHg, skin thickness around 19.66 mm, insulin level around 68.79 mu U/ml, BMI around 30.3, and around 31 years of age. The average number of times of pregnancy is around 4. The average score of the likelihood of diabetes based on family history is 0.43. Note that for blood pressure and skin thickness, the median is greater than the mean, indicating that the distribution is negatively skewed, with extremely low values pulling the mean down. Also for insulin levels, the median is a lot lower than the mean, indicating that there are very extreme high values that pull the mean higher towards to right. The median for age is also lower than the mean, indicating there are people who are older than the majority. 
+
+Create a test data set and a train data set that will be used for all of the models we explore to predict diabetes. 
+```{r}
+# Selects 154 random rows for test data (20% of the total data rows we have)
+set.seed(12345)
+test_set <- sample(1:nrow(diabetes), 154) 
+# Create a train set and test set
+diabetes_train <- diabetes[-test_set,]
+diabetes_test <- diabetes[test_set,]
+write.csv(diabetes_train, "diabetes_train.csv", row.names = FALSE)
+write.csv(diabetes_test,"diabetes_test.csv", row.names = FALSE)
+```
+# Part 2 Build Individual Model 
+(1) Logistic regression model 
+## Get Data
+```{r}
+diabetes_train <- read.csv("diabetes_train.csv")
+diabetes_test <- read.csv("diabetes_test.csv")
+diabetes_train$Age <- NULL
+diabetes_test$Age <- NULL
+diabetes_train$age_level <- as.factor(diabetes_train$age_level)
+diabetes_test$age_level <- as.factor(diabetes_test$age_level)
+
+summary(diabetes_train)
+```
+## Build Full Logistic Model
+```{r}
+log_mod <- glm(diabetes_train$Outcome ~., data = diabetes_train, family=binomial(link="logit"))
+summary(log_mod)
+```
+## Logistic Model with Only Significant Variables
+```{r}
+sig_log_mod <- glm(diabetes_train$Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, family=binomial(link="logit"))
+summary(sig_log_mod)
+```
+## Evaluating Both Models
+```{r}
+full_mod_preds <- predict(log_mod, diabetes_test)
+full_mod_preds_bin <- ifelse(full_mod_preds > 0.5, 1, 0)
+
+sig_mod_preds <- predict(sig_log_mod, diabetes_test)
+sig_mod_preds_bin <- ifelse(sig_mod_preds > 0.5, 1, 0)
+
+library(gmodels)
+CrossTable(x = diabetes_test$Outcome, y = full_mod_preds_bin, props.chisq = FALSE)
+
+CrossTable(x = diabetes_test$Outcome, y = sig_mod_preds_bin, props.chisq = FALSE)
+```
+The accuracy for this model is 79.87%.
+
+(2) kNN Model
+```{r}
+diabetes_test <- read.csv("diabetes_test.csv")
+diabetes_train <- read.csv("diabetes_train.csv")
+#Get rid of the age column and make outcome and the age_level variables as factors
+diabetes_test$Age <- NULL
+diabetes_train$Age <- NULL 
+diabetes_test$Outcome <- as.factor(diabetes_test$Outcome)
+diabetes_train$Outcome <- as.factor(diabetes_train$Outcome)
+diabetes_test$age_level <- as.factor(diabetes_test$age_level)
+diabetes_train$age_level <- as.factor(diabetes_train$age_level)
+
+#convert the variables in both the test and train data set into dummy variables
+diabetes_test_d <- as.data.frame(model.matrix(~.-1,diabetes_test))
+str(diabetes_test_d)
+diabetes_train_d <- as.data.frame(model.matrix(~.-1,diabetes_train))
+str(diabetes_train_d)
+```
+
+```{r}
+#Normalize the data 
+normalize <- function(x) {
+  return ((x-min(x)) / (max(x) - min(x)))
+}
+
+diabetes_test_n <- as.data.frame(lapply(diabetes_test_d, normalize))
+diabetes_train_n <- as.data.frame(lapply(diabetes_train_d, normalize))
+
+#Create labels 
+
+diabetes_test_label <- diabetes_test_n$Outcome1
+diabetes_train_label <- diabetes_train_n$Outcome1
+
+diabetes_test_n$Outcome1 <- NULL
+diabetes_test_n$Outcome0 <- NULL 
+diabetes_train_n$Outcome1 <- NULL
+diabetes_train_n$Outcome0 <- NULL
+```
+
+```{r}
+#Build the KNN model
+library(class)
+library(caret)
+k_value_1 <- sqrt(nrow(diabetes_train_n)) 
+knn_model_1 <- knn(train = diabetes_train_n, test = diabetes_test_n, cl = diabetes_train_label, k = k_value_1)
+
+#k_value_1
+
+#Evaluate model results
+library(gmodels)
+CrossTable(x=diabetes_test_label, y=knn_model_1, prop.chisq=FALSE)
+
+confusionMatrix(as.factor(knn_model_1), as.factor(diabetes_test_label), positive = "1")
+```
+
+```{r}
+#Build the KNN model
+library(class)
+library(caret)
+k_value_2 <- sqrt(nrow(diabetes_train_n)) + 8
+knn_model_2 <- knn(train = diabetes_train_n, test = diabetes_test_n, cl = diabetes_train_label, k = k_value_2)
+
+#k_value_2
+
+#Evaluate model results
+library(gmodels)
+CrossTable(x=diabetes_test_label, y=knn_model_2, prop.chisq=FALSE)
+
+confusionMatrix(as.factor(knn_model_2), as.factor(diabetes_test_label), positive = "1")
+```
+
+```{r}
+#Build the KNN model
+library(class)
+library(caret)
+k_value_3 <- sqrt(nrow(diabetes_train_n)) - 8
+knn_model_3 <- knn(train = diabetes_train_n, test = diabetes_test_n, cl = diabetes_train_label, k = k_value_3)
+
+#Evaluate model results
+library(gmodels)
+CrossTable(x=diabetes_test_label, y=knn_model_3, prop.chisq=FALSE)
+
+confusionMatrix(as.factor(knn_model_3), as.factor(diabetes_test_label), positive = "1")
+```
+
+We tried to produce the KNN Model by trying different K values. After evaluating the three models with k values ~ 25, 33, and 17, we found that k value 17 produces the highest accuracy rate (0.8052) and Kappa value (0.5306). The false positive rate is 10.5% and the false negative rate is 38.8%. This outcome is also better than the model with k value 25 (false positive: 12.4% & false negative: 42.9%) and k value 33 (false positive: 13.3% & false negative: 44.9%). This indicates that model 3 is the best in detecting false positives and false negatives as well. Overall, model 3 is the model that has the best performance. To apply this data into our diabetes diagnosis. False positive could be harmful as it could cause unnecessary anxiety and psychological distress for the healthy individuals. False negative could also be harmful as it provides a false sense of security and prevents patients from getting early treatment. Since model 3 has the lowest false positive and false negative rates, it's the best among all to prevent false positive and false negatives from happening. 
+
+(3) ANN model
+#1.Import and clean dataset
+```{r}
+#Read in the dataset
+diabetes_test <- read.csv("diabetes_test.csv")
+diabetes_train <- read.csv("diabetes_train.csv")
+
+#Clean dataset
+diabetes_test$age_level<- as.factor(diabetes_test$age_level)
+diabetes_train$age_level <- as.factor(diabetes_train$age_level)
+diabetes_test$Age <- NULL
+diabetes_train$Age <- NULL
+
+# Normalizing train and test data
+normalize <- function(x) { 
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+diabetes_test_ANN_dummy <- as.data.frame(model.matrix(~.-1,data = diabetes_test))
+diabetes_train_ANN_dummy <- as.data.frame(model.matrix(~.-1,data = diabetes_train))
+
+# apply normalization to entire data frame
+diabetes_test_ANN_norm <- as.data.frame(lapply(diabetes_test_ANN_dummy, normalize))
+diabetes_train_ANN_norm <- as.data.frame(lapply(diabetes_train_ANN_dummy, normalize))
+
+str(diabetes_test_ANN_norm)
+
+diabetes_train_ANN_labels <- diabetes_train_ANN$Outcome #the y variable of train data set 
+diabetes_test_ANN_labels <- diabetes_test_ANN$Outcome #the y variable of test data set
+```
+
+#2.Build ANN model
+```{r}
+# train the neuralnet model
+library(neuralnet)
+
+# simple ANN with only a single hidden neuron
+diabetes_model <- neuralnet(formula = Outcome~.,
+                              data = diabetes_train_ANN_norm)
+
+
+# visualize the network topology
+plot(diabetes_model)
+str(diabetes_model)
+```
+From the plot, we can see pregnancies, glucose, blood pressure and etc are input variables, which are located on the left of the plot. The numbers on the black line that is pointing toward the center are weights of respective inputs.For example, 1.40599 is the weight of pregnancies in the model. The blue is the bias, which is summed with the weighted inputs to form the net inputs. Bias and weights are both adjustable parameters of the neuron. 
+
+#3.Predict outcome using Basic ANN model
+```{r}
+diabetes_test_ANN_predict <- predict(diabetes_model,diabetes_test_ANN_norm,type = "response")
+diabetes_test_ANN_predict <- ifelse(diabetes_test_ANN_predict > 0.5, 1, 0) #make it binary 
+
+
+library(gmodels)
+library(class)
+library(caret)
+CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict, prop.chisq=FALSE)
+
+# Confusion matrix for the first model 
+confusionMatrix(as.factor(diabetes_test_ANN_predict),as.factor(diabetes_test_ANN_labels), positive = "1")
+```
+From the confusion matrix, we can see that there are 27 false positive meaning there are 27 people who are not diabetes patient but the model predicted them to be diabetic. There are 10 false negative meaning that there are 10 people who actually got diabetes but the model did not predict them to be. From the business standpoint, we hope to reduce the false false negative number as much as possible since we do not want to miss the opportunity to help them prevent diabetes in advance. We can also see that the accuracy for this model is 0.7597 with kappa value of 0.4932. 
+
+#4. Improve ANN Model
+```{r}
+# train the neuralnet model
+library(neuralnet)
+
+# simple ANN with only a single hidden neuron
+diabetes_model2 <- neuralnet(formula = Outcome~.,
+                              data = diabetes_train_ANN_norm,hidden = 2)
+
+
+# visualize the network topology
+plot(diabetes_model2)
+```
+From the plot, we can see pregnancies, glucose, blood pressure and etc are input variables, which are located on the left of the plot. The numbers on the black line that is pointing toward the center are weights of respective inputs.In this model, we increase the number of hidden neutrons to 2. Therefore, we have two nodes before the outcome. This would help build a more complex model. The blue is the bias, which is summed with the weighted inputs to form the net inputs. Bias and weights are both adjustable parameters of the neuron. 
+
+#5.Predict outcome using Improved ANN model
+```{r}
+diabetes_test_ANN_predict2 <- predict(diabetes_model2,diabetes_test_ANN_norm,type = "response")
+diabetes_test_ANN_predict2 <- ifelse(diabetes_test_ANN_predict2 > 0.5, 1, 0) #make it binary 
+
+
+library(gmodels)
+library(class)
+library(caret)
+CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict2, prop.chisq=FALSE)
+
+# Confusion matrix for the first model 
+confusionMatrix(as.factor(diabetes_test_ANN_predict2),as.factor(diabetes_test_ANN_labels), positive = "1")
+```
+From the confusion matrix, we can see that there are 23 false positive meaning there are 23 people who are not diabetes patient but the model predicted them to be diabetic. This is improved from 27 false positive outcomes. There are 13 false negative meaning that there are 13 people who actually got diabetes but the model did not predict them to be. This is worse than the basic model which has 10 false negative outcomes. From the business standpoint, we hope to reduce the false false negative number as much as possible since we do not want to miss the opportunity to help them prevent diabetes in advance. We can also see that the accuracy for this model is 0.7662 with kappa value of 0.489. The accuracy for this improved model is higher than that of the basic one. 
+
+#6. Trying to build better ANN by increasing hidden neurons
+```{r}
+# train the neuralnet model
+library(neuralnet)
+
+# simple ANN with only a single hidden neuron
+diabetes_model3 <- neuralnet(formula = Outcome~.,
+                              data = diabetes_train_ANN_norm,hidden = 10)
+
+
+# visualize the network topology
+plot(diabetes_model3)
+diabetes_test_ANN_predict3 <- predict(diabetes_model3,diabetes_test_ANN_norm,type = "response")
+diabetes_test_ANN_predict3 <- ifelse(diabetes_test_ANN_predict2 > 0.5, 1, 0) #make it binary 
+
+
+library(gmodels)
+library(class)
+library(caret)
+CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict3, prop.chisq=FALSE)
+
+# Confusion matrix for the first model 
+confusionMatrix(as.factor(diabetes_test_ANN_predict3),as.factor(diabetes_test_ANN_labels), positive = "1")
+
+```
+In this model, we tried to increase the hidden neutrons to 10 to see whether it would significantly improve the result. However, from the confusion matrix, we see that there are no difference between the model with 2 hidden neurons and the one with 10. Therefore, we concluded that no matter how many hidden neutrons we increase from 2, the result will always be the same. Thus, we are going to use the model with 2 hidden neurons. 
+
+(4) Decision Tree model
+Read train and test data set 
+```{r}
+diabetes_train <- read.csv("diabetes_train.csv")
+diabetes_test <- read.csv("diabetes_test.csv")
+```
+
+
+Convert the factors into dummy variables 
+```{r}
+diabetes_train_mm <-as.data.frame(model.matrix(~.-1,diabetes_train))
+str(diabetes_train_mm)
+diabetes_test_mm <- as.data.frame(model.matrix(~.-1,diabetes_test))
+str(diabetes_test_mm)
+```
+
+We are now going to create a decision tree model for predicting whether a person has diabetes or not using the train data that has been converted to dummy variables and we are going to use the decision tree model to predict the test data set. 
+```{r}
+#Load the library required 
+library(C50)
+tree_model <- C5.0(diabetes_train_mm[-9], as.factor(diabetes_train_mm$Outcome))
+tree_model_predict <- predict(tree_model,diabetes_test_mm)
+```
+Next, we are going to build a confusion matrix to examine the accuracy of prediction of diabetes by the decision tree model. 
+```{r}
+library(class)
+library(caret)
+library(gmodels)
+CrossTable(x = diabetes_test_mm$Outcome, y = tree_model_predict, props.chisq = FALSE)
+confusionMatrix(as.factor(tree_model_predict),as.factor(diabetes_test_mm$Outcome), positive = "1")
+```
+The false positive rate for the decision tree model is 36.5% (15/41), so 36.5% of patient that are predicted to have diabetes according to this model actually do not have diabetes. The false negative rate for the decision tree model is 20.35%(23/113), so 20.35% of people that are predicted to not have diabetes according to this model actually have diabetes. The overall accuracy rate of the decision tree model is 0.7532 and the kappa value of the model is 0.4054 which means an adequate agreement of the prediction of the results to the actual results compared to a randomly generated model. Overall, the decison tree model has an accuracy rate that is higher than pure chance (50% < 75.32%). However, the relatively high false positive rate and false negative rate of the model is a little concerning especially considering the purpose of our model is predcting a disease. Since false positive results lead to unnecessary stree for healthy people and potential cause of low sugar due to false insulin treatment and false negative results will lead to untreated diabetes that might develop further into more serious illnesses. 
+
+So now, let us attempt to improve our decision tree model by boosting it up with more trials 
+Let us first start with 10 trials. 
+```{r}
+tree_model_improve10 <- C5.0(diabetes_train_mm[-9], as.factor(diabetes_train_mm$Outcome), 
+                           trials = 10)
+tree_model_predict_improve10 <- predict(tree_model_improve10,diabetes_test_mm)
+```
+Now let us build a confusion matrix to examine the accuracy of the improved decision tree model. 
+```{r}
+CrossTable(x = diabetes_test_mm$Outcome, y = tree_model_predict_improve10, props.chisq = FALSE)
+confusionMatrix(as.factor(tree_model_predict_improve10),as.factor(diabetes_test_mm$Outcome), positive = "1")
+```
+Our attempt of improving the desion tree model with 10 trails failed since both the accuracy rate and the kappa value are even lower than the previous model. Instead, we are going to try 100 trials next. 
+```{r}
+tree_model_improve100 <- C5.0(diabetes_train_mm[-9], as.factor(diabetes_train_mm$Outcome), 
+                           trials = 100)
+tree_model_predict_improve100 <- predict(tree_model_improve100,diabetes_test_mm)
+```
+Now let us build a confusion matrix to examine the accuracy of the improved decision tree model. 
+```{r}
+CrossTable(x = diabetes_test_mm$Outcome, y = tree_model_predict_improve100, props.chisq = FALSE)
+confusionMatrix(as.factor(tree_model_predict_improve100),as.factor(diabetes_test_mm$Outcome), positive = "1")
+```
+The false positive rate of the improved decision tree model with 100 trials is 39.6% (19/48) (which is higher than the original model which is 36.5%) and the false negative rate of the model is 18.9% (20/106) (which is lower than the original model which is 20.35%). The kappa value of the improved model increased by less than 1% while the accuracy rate decreased by less than 1%. So overall, we are indifferent between the original and the improved decision tree model. The original model has a lower false positive rate while the improved model has a lower false negative rate. So in an application standpoint, using the original model to predict diabetes will more likely cause diabetes to be undetected and using the improved model to predict will more likely cause unnecessary anxiety for healthy people as they are falsely diagnosed with diabetes by the improved model. 
+
+(5)Support Vector Model 
+## Get Data
+```{r}
+diabetes_train <- read.csv("diabetes_train.csv")
+diabetes_test <- read.csv("diabetes_test.csv")
+diabetes_train$Age <- NULL
+diabetes_test$Age <- NULL
+diabetes_train$age_level <- as.factor(diabetes_train$age_level)
+diabetes_test$age_level <- as.factor(diabetes_test$age_level)
+
+summary(diabetes_train)
+```
+
+# Build SVM model
+```{r}
+library(kernlab)
+svm_mod <- ksvm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, kernel = "vanilladot", )
+svm_preds <- predict(svm_mod, diabetes_test)
+svm_preds <- ifelse(svm_preds > 0.5, 1, 0)
+
+
+library(gmodels)
+CrossTable(x = diabetes_test$Outcome, y = svm_preds, props.chisq = FALSE)
+```
+> The accuracy for this model is (97 + 28) / (97 + 28 + 8 + 21) = 81.17%.
