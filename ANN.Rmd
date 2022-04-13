@@ -30,8 +30,8 @@ diabetes_train_ANN_norm <- as.data.frame(lapply(diabetes_train_ANN_dummy, normal
 
 str(diabetes_test_ANN_norm)
 
-diabetes_train_ANN_labels <- diabetes_train_ANN$Outcome #the y variable of train data set 
-diabetes_test_ANN_labels <- diabetes_test_ANN$Outcome #the y variable of test data set
+diabetes_train_ANN_labels <- diabetes_train$Outcome #the y variable of train data set 
+diabetes_test_ANN_labels <- diabetes_test$Outcome #the y variable of test data set
 ```
 
 #2.Build ANN model
