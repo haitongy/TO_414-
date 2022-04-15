@@ -1,5 +1,5 @@
 ---
-title: "Project 2 "
+title: "Project 2 Report "
 author: "Group 15 Analysts R Us"
 date: "2/25/2022"
 output: html_document
@@ -148,6 +148,7 @@ sig_mod_preds <- predict(sig_log_mod, diabetes_test)
 sig_mod_preds_bin <- ifelse(sig_mod_preds > 0.5, 1, 0)
 
 library(gmodels)
+library(caret)
 confusionMatrix(as.factor(full_mod_preds_bin), as.factor(diabetes_test$Outcome), positive = "1")
 CrossTable(x = diabetes_test$Outcome, y = full_mod_preds_bin, props.chisq = FALSE)
 confusionMatrix(as.factor(sig_mod_preds_bin), as.factor(diabetes_test$Outcome), positive = "1")
@@ -359,9 +360,17 @@ CrossTable(x = diabetes_test_ANN_labels, y = diabetes_test_ANN_predict3, prop.ch
 confusionMatrix(as.factor(diabetes_test_ANN_predict3),as.factor(diabetes_test_ANN_labels), positive = "1")
 
 ```
-In this model, we tried to increase the hidden neutrons to 10 to see whether it would significantly improve the result. However, from the confusion matrix, we see that there are no difference between the model with 2 hidden neurons and the one with 10. Therefore, we concluded that no matter how many hidden neurons we increase from 2, the result will always be the same. Among the three kNN models, the model with the highest sensitivity is the basic kNN model, so we are going to use the first kNN model when we build our stacked model later. 
+In this model, we tried to increase the hidden neutrons to 10 to see whether it would significantly improve the result. However, from the confusion matrix, we see that there are no difference between the model with 2 hidden neurons and the one with 10. Therefore, we concluded that no matter how many hidden neurons we increase from 2, the result will always be the same. Among the three ANN models, the model with the highest sensitivity is the basic ANN model, so we are going to use the first ANN model when we build our stacked model later. 
 
-(4) Decision Tree model
+
+(4) Decision Tree Model 
+Read train and test data set 
+```{r}
+diabetes_train <- read.csv("diabetes_train.csv")
+diabetes_test <- read.csv("diabetes_test.csv")
+```
+
+
 Convert the factors into dummy variables 
 ```{r}
 diabetes_train_mm <-as.data.frame(model.matrix(~.-1,diabetes_train))
@@ -385,7 +394,7 @@ library(gmodels)
 CrossTable(x = diabetes_test_mm$Outcome, y = tree_model_predict, props.chisq = FALSE)
 confusionMatrix(as.factor(tree_model_predict),as.factor(diabetes_test_mm$Outcome), positive = "1")
 ```
-The false positive rate for the decision tree model is 36.5% (15/41), so 36.5% of patient that are predicted to have diabetes according to this model actually do not have diabetes. The false negative rate for the decision tree model is 20.35%(23/113), so 20.35% of people that are predicted to not have diabetes according to this model actually have diabetes. The overall accuracy rate of the decision tree model is 0.7532 and the kappa value of the model is 0.4054 which means an adequate agreement of the prediction of the results to the actual results compared to a randomly generated model. Overall, the decison tree model has an accuracy rate that is higher than pure chance (50% < 75.32%). However, the relatively high false positive rate and false negative rate of the model is a little concerning especially considering the purpose of our model is predicting a disease.The sensitivity of the model is 53.06%, which means that the tree model can detect 53.06% of the diabetic patients.Since false positive results lead to unnecessary stress for healthy people and potential cause of low sugar due to false insulin treatment and false negative results will lead to untreated diabetes that might develop further into more serious illnesses. 
+The false positive rate for the decision tree model is 36.5% (15/41), so 36.5% of patient that are predicted to have diabetes according to this model actually do not have diabetes. The false negative rate for the decision tree model is 20.35%(23/113), so 20.35% of people that are predicted to not have diabetes according to this model actually have diabetes. The overall accuracy rate of the decision tree model is 0.7532 and the kappa value of the model is 0.4054 which means an adequate agreement of the prediction of the results to the actual results compared to a randomly generated model. Overall, the decison tree model has an accuracy rate that is higher than pure chance (50% < 75.32%). However, the relatively high false positive rate and false negative rate of the model is a little concerning especially considering the purpose of our model is predcting a disease. Since false positive results lead to unnecessary stree for healthy people and potential cause of low sugar due to false insulin treatment and false negative results will lead to untreated diabetes that might develop further into more serious illnesses. 
 
 So now, let us attempt to improve our decision tree model by boosting it up with more trials 
 Let us first start with 10 trials. 
@@ -399,7 +408,7 @@ Now let us build a confusion matrix to examine the accuracy of the improved deci
 CrossTable(x = diabetes_test_mm$Outcome, y = tree_model_predict_improve10, props.chisq = FALSE)
 confusionMatrix(as.factor(tree_model_predict_improve10),as.factor(diabetes_test_mm$Outcome), positive = "1")
 ```
-Our attempt of improving the desion tree model with 10 trials failed since the accuracy rate, the kappa value, and the sensitivity are even lower than the previous model. Instead, we are going to try 100 trials next. 
+Our attempt of improving the desion tree model with 10 trails failed since both the accuracy rate and the kappa value are even lower than the previous model. Instead, we are going to try 100 trials next. 
 ```{r}
 tree_model_improve100 <- C5.0(diabetes_train_mm[-9], as.factor(diabetes_train_mm$Outcome), 
                            trials = 100)
@@ -410,7 +419,8 @@ Now let us build a confusion matrix to examine the accuracy of the improved deci
 CrossTable(x = diabetes_test_mm$Outcome, y = tree_model_predict_improve100, props.chisq = FALSE)
 confusionMatrix(as.factor(tree_model_predict_improve100),as.factor(diabetes_test_mm$Outcome), positive = "1")
 ```
-The false positive rate of the improved decision tree model with 100 trials is 39.6% (19/48) (which is higher than the original model which is 36.5%) and the false negative rate of the model is 18.9% (20/106) (which is lower than the original model which is 20.35%). The kappa value of the improved model increased by less than 1% while the accuracy rate decreased by less than 1%. So overall, we are indifferent between the original and the improved decision tree model. The original model has a lower false positive rate while the improved model has a lower false negative rate, furthermore, the sensitivity of the improved model is a lot larger than the original model. So in an application standpoint, using the original model to predict diabetes will more likely cause diabetes to be undetected and using the improved model to predict will more likely cause unnecessary anxiety for healthy people as they are falsely diagnosed with diabetes by the improved model. Therefore, we will use the improved tree model for our stacked model later. 
+The false positive rate of the improved decision tree model with 100 trials is 39.6% (19/48) (which is higher than the original model which is 36.5%) and the false negative rate of the model is 18.9% (20/106) (which is lower than the original model which is 20.35%). The kappa value of the improved model increased by less than 1% while the accuracy rate decreased by less than 1%.However, the sensitivity of the improved decision tree model is increase by about 6% compared to the original model and 9% increased compared to the improved model using 10 trials. So overall, we would prefer the improved decision tree model with 100 trials for our stacked model. The original model has a lower false positive rate while the improved model has a lower false negative rate. So in an application standpoint, using the original model to predict diabetes will more likely cause diabetes to be undetected and using the improved model to predict will more likely cause unnecessary anxiety for healthy people as they are falsely diagnosed with diabetes by the improved model and the goal of this project in particular is to diagnose diabetes accurately. 
+
 
 (5) Support Vector Model 
 ## Get Data
@@ -423,12 +433,12 @@ diabetes_test$age_level <- as.factor(diabetes_test$age_level)
 summary(diabetes_train)
 ```
 
-(5) Build SVM model
+ Build SVM model
 ```{r}
 library(kernlab)
 svm_mod <- ksvm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, kernel = "vanilladot", )
-svm_preds <- predict(svm_mod, diabetes_test)
-svm_preds <- ifelse(svm_preds > 0.5, 1, 0)
+svm_preds_raw <- predict(svm_mod, diabetes_test)
+svm_preds <- ifelse(svm_preds_raw > 0.5, 1, 0)
 
 library(gmodels)
 library(caret)
@@ -463,17 +473,50 @@ confusionMatrix(as.factor(rf_model_predict),as.factor(diabetes_test$Outcome), po
 The false positive rate of the random forest model with 100 trials is 6.7%% (15/90) and the false negative rate of the model is 46.9% (23/49). The kappa value of the model is 0.4050, which means this model is 40% more accurate than a randomly generated model. The accuracy is 75.32%. The sensitivity of the random forest model is 53.06%, meaning this model can detect the diabetes patient 53.06% of the time. 
 
 Part 3 Stacked model 
-(a)Split test and train data from using the test data for the individual models
+
+(a)Combine the predictions of all of the individual models of the test data and make a new data frame.  
+```{r}
+diabetes_combine <- data.frame(sig_mod_preds_bin,knn_model_3,diabetes_test_ANN_predict,tree_model_predict_improve100,svm_preds,rf_model_predict,diabetes_test$Outcome, row.names = NULL)
+names(diabetes_combine)[1]<- "Logistic_Predict"
+names(diabetes_combine)[2]<- "KNN_Predict"
+names(diabetes_combine)[3]<- "ANN_Predict"
+names(diabetes_combine)[4]<- "Tree_predict"
+names(diabetes_combine)[5]<- "SVM_Predict"
+names(diabetes_combine)[6]<- "Random_Forest_Predict"
+names(diabetes_combine)[7]<- "Actual_Diagnosis"
+diabetes_combine
+```
+
+(b) Split test and train data from using the combined data frame with individual model predictions
 ```{r}
 #Selects 31 random rows for test data (20% of the total data rows we have)
-#set.seed(12345)
-test_set_stack <- sample(1:nrow(diabetes_test), 31) 
+set.seed(414)
+test_set_stack <- sample(1:nrow(diabetes_combine), 31) 
 # Create a train set and test set
-diabetes_train_stack <- diabetes[-test_set_stack,]
-diabetes_test_stack <- diabetes[test_set_stack,]
+diabetes_train_stack <- diabetes_combine[-test_set_stack,]
+diabetes_test_stack <- diabetes_combine[test_set_stack,]
 str(diabetes_test_stack)
 ```
-Combine the predictions of all of the individual models 
+
+(c) Build a decision tree model using the stack model train data 
 ```{r}
-diabetes_combine <- data.frame()
+library(C50)
+stack_model <- C5.0(diabetes_train_stack[-7], as.factor(diabetes_train_stack$Actual_Diagnosis))
+stack_predict <- predict(stack_model,diabetes_test_stack)
+confusionMatrix(as.factor(stack_predict),as.factor(diabetes_test_stack$Actual_Diagnosis), positive = "1")
 ```
+The kappa value for the second level decision tree model is 0.4593, meaning that compared to a randomly generated model, the stacked model is 45.93% more accurate. The sensitivity for the stacked model is 44.44%, meaning it is able to identify 44.44% of all of the diabetic patients.The accuracy rate of the stacked model is 80.65%. 
+
+The kappa value for the logistic regression model, decision tree model, KNN model, ANN model, SVM model, random forest model, and stacked model are 0.4825, 0.4131, 0.4993, 0.4932, 0.5329, 0.3115, and 0.4593 respectively.The model with the highest kappa value is the kNN model (0.4993). 
+
+The sensitivity value for the logistic regression model, decision tree model, KNN model, ANN model, SVM model, random forest model, and stacked model are 0.4898,0.5918, 0.5918, 0.7959, 0.5714, 0.4694, and 0.4444 respectively.The model with the highest sensitivity value is the ANN model (0.7959). 
+
+The accuracy rate for the logistic regression model, decision tree model, KNN model, ANN model, SVM model, random forest model, and stacked model are 0.7987, 0.7468, 0.7922, 0.7597, 0.8117, 0.7143, and 0.8065 respectively.The model with the highest accuracy rate is the SVM model (0.8117). 
+
+Part 4 Conclusion 
+The purpose of our project is to create a model predicting whether someone has diabetes based on parameters including # of pregnancies (for females), glucose level, blood pressure, thickness of skin, insulin level, BMI, age, and diabetes pedigree function (likelihood of diabetes based on family history). The main criteria of choosing the best model is the ability to accurately diagnose all of the diabetic patient and that is measured by sensitivity (which represents how many percent of diabetic patients are successfully diagnosed by the model).
+
+Based on the six individual models and the stacked model, the models that can diagnose more than half of the existing diabetic patients (sensitivity > 50%, better than chance) are kNN model, ANN model, Decision Tree model, and SVM model. Among these four models. SVM model has the highest accuracy rate (81.17%) and the highest kappa value (0.5329). So overall, our group concludes that SVM model is the best model to be used to predict diabetes since it has an ability to detect existing diabetic patients better than chance, the highest accuracy rate among all seven models, and a relatively high kappa value (meaning it is better than a randomly generated model). 
+Surprisingly, the stacked model did not hae a high sensitivity, only able to detect 44.44% of the existing diabetic patients. However, the stacked model does have a relatively high overal accuracy rate (80.65%) which is just below the SVM model. 
+
+The business implication of our project is significant. By using the SVM model(the best model according to our selection criteria) to predict diabetes, diabetic patients can benefit from early treatment after an early detection conveniently (since the parameters required for our model is not complicated to obtain compare to how diabetes are diagnosed currently).The future direction of our project could be try to optimize our SVM model using the train function in order to obtain the highest sensitivity possible while not sacrificing the kappa value or the overall accuracy rate. 
