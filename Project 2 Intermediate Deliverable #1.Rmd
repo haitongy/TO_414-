@@ -9,9 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Part 1 Data Set Introduction
+# Part 1: Data Set Introduction
 
-We found our data set in the Kaggle data base.According to the information from Kaggle, we know that the data set is originally from the National Institute of Diabetes and Digestive and Kidney Diseases.The diagnostic, binary-valued variable investigated is whether the patient shows signs of diabetes according to World Health Organization criteria and all of the patients in this data set lives near Phoenix, Arizona, USA. 
+We found our data set in the Kaggle data base.According to the information from Kaggle, we know that the data set is originally from the National Institute of Diabetes and Digestive and Kidney Diseases.The diagnostic, binary-valued variable investigated is whether the patient shows signs of diabetes according to World Health Organization criteria. All of the patients in this data set live near Phoenix, Arizona, USA. 
 
 Let us first load the data set. 
 ```{r}
@@ -39,11 +39,14 @@ There are a total of 9 columns in the data set:
 
 `Outcome`: Class variable (0 or 1), this is also going to be our response variable
 
-`Business Question` Does a patient have diabetes? 
+`Our Business Question` Does a patient have diabetes? 
+
+This business questions is relevant because it can help identify whether a patient has diabetes, alerting them to a potentially hazardous medical condition. It is an important issue and we hope our model will be able to predict the presence of diabetes accurately.
 
 Throughout this project we will generate the best prediction model based on our data set: predict whether a person has diabetes with information about their number of times pregnant, glucose level, blood pressure, triceps skin fold thickness, insulin, BMI, diabetes pedigree function, and age. If we can predict diabetes based on the above information through a questionnaire, we can target people specifically with high risk of having diabetes if we are a company selling health supplements for diabetes prevention.  
 
-We will first clean the data 
+We will first clean the data.
+
 ```{r}
 #convert number of pregnancy to factors
 diabetes$Pregnancies <- as.factor(diabetes$Pregnancies)
@@ -69,7 +72,7 @@ diabetes$age_level <- as.factor(diabetes$age_level)
 str(diabetes)
 summary(diabetes)
 ```
-Now that we finished cleaning up the data, we are going to do some primary exploration on the cleaned data set before we start making and improving prediction models using ANN,kNN, and logistic regression. 
+Now that we finished cleaning up the data, we are going to do some primary exploration on the cleaned data set before we start making and improving prediction models using ANN,KNN, SVM and logistic regression. 
 
 We will first explore the characteristics of people who are diabetic
 ```{r}
@@ -102,7 +105,7 @@ summary(as.numeric(n$DiabetesPedigreeFunction))
 ```
 Based on the data, we can see that people without diabetes have glucose levels on average around 110, blood pressure around 68.18 mmHg, skin thickness around 19.66 mm, insulin level around 68.79 mu U/ml, BMI around 30.3, and around 31 years of age. The average number of times of pregnancy is around 4. The average score of the likelihood of diabetes based on family history is 0.43. Note that for blood pressure and skin thickness, the median is greater than the mean, indicating that the distribution is negatively skewed, with extremely low values pulling the mean down. Also for insulin levels, the median is a lot lower than the mean, indicating that there are very extreme high values that pull the mean higher towards to right. The median for age is also lower than the mean, indicating there are people who are older than the majority. 
 
-Create a test data set and a train data set that will be used for all of the models we explore to predict diabetes. 
+Now, we will create a test data set and a train data set that will be used for all of the models we explore to predict diabetes. 
 ```{r}
 # Selects 154 random rows for test data (20% of the total data rows we have)
 set.seed(12345)
@@ -114,7 +117,7 @@ write.csv(diabetes_train, "diabetes_train.csv", row.names = FALSE)
 write.csv(diabetes_test,"diabetes_test.csv", row.names = FALSE)
 ```
 
-# Part 2 Build Individual Model 
+# Part 2: Build Individual Models 
 When we are comparing between our models, we are going to be focusing on the sensitivity of the model which tells us how much of the diabetic patients are accurately diagnosed with our model. The main goal of this project is to maximize the sensitivity since we would want our model to diagnose as many diabetic patients as possible 
 
 (1) Logistic regression model 
@@ -479,7 +482,7 @@ confusionMatrix(as.factor(rf_model_predict),as.factor(diabetes_test$Outcome), po
 ```
 The false positive rate of the random forest model with 100 trials is 6.7%% (15/90) and the false negative rate of the model is 46.9% (23/49). The kappa value of the model is 0.4050, which means this model is 40% more accurate than a randomly generated model. The accuracy is 75.32%. The sensitivity of the random forest model is 53.06%, meaning this model can detect the diabetes patient 53.06% of the time. 
 
-Part 3 Stacked model 
+Part 3: Stacked model 
 
 (a)Combine the predictions of all of the individual models of the test data and make a new data frame.  
 ```{r}
@@ -520,7 +523,9 @@ The sensitivity value for the logistic regression model, decision tree model, KN
 
 The accuracy rate for the logistic regression model, decision tree model, KNN model, ANN model, SVM model, random forest model, and stacked model are 0.7987, 0.7468, 0.7922, 0.7597, 0.8117, 0.7143, and 0.8065 respectively.The model with the highest accuracy rate is the SVM model (0.8117). 
 
-Part 4 Conclusion 
+
+
+Part 4: Conclusion 
 The purpose of our project is to create a model predicting whether someone has diabetes based on parameters including # of pregnancies (for females), glucose level, blood pressure, thickness of skin, insulin level, BMI, age, and diabetes pedigree function (likelihood of diabetes based on family history). The main criteria of choosing the best model is the ability to accurately diagnose all of the diabetic patient and that is measured by sensitivity (which represents how many percent of diabetic patients are successfully diagnosed by the model).
 
 Based on the six individual models and the stacked model, the models that can diagnose more than half of the existing diabetic patients (sensitivity > 50%, better than chance) are kNN model, ANN model, Decision Tree model, and SVM model. Among these four models. SVM model has the highest accuracy rate (81.17%) and the highest kappa value (0.5329). So overall, our group concludes that SVM model is the best model to be used to predict diabetes since it has an ability to detect existing diabetic patients better than chance, the highest accuracy rate among all seven models, and a relatively high kappa value (meaning it is better than a randomly generated model). 
