@@ -120,8 +120,9 @@ write.csv(diabetes_test,"diabetes_test.csv", row.names = FALSE)
 # Part 2: Build Individual Models 
 When we are comparing between our models, we are going to be focusing on the sensitivity of the model which tells us how much of the diabetic patients are accurately diagnosed with our model. The main goal of this project is to maximize the sensitivity since we would want our model to diagnose as many diabetic patients as possible 
 
-(1) Logistic regression model 
-## Get Data
+## (1) Logistic regression model 
+
+Get Data
 ```{r}
 diabetes_train <- read.csv("diabetes_train.csv")
 diabetes_test <- read.csv("diabetes_test.csv")
@@ -132,17 +133,17 @@ diabetes_test$age_level <- as.factor(diabetes_test$age_level)
 
 summary(diabetes_train)
 ```
-## Build Full Logistic Model
+### Build Full Logistic Model
 ```{r}
 log_mod <- glm(diabetes_train$Outcome ~., data = diabetes_train, family=binomial(link="logit"))
 summary(log_mod)
 ```
-## Logistic Model with Only Significant Variables
+### Logistic Model with Only Significant Variables
 ```{r}
 sig_log_mod <- glm(diabetes_train$Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, family=binomial(link="logit"))
 summary(sig_log_mod)
 ```
-## Evaluating Both Models
+### Evaluating Both Models
 ```{r}
 full_mod_preds <- predict(log_mod, diabetes_test)
 full_mod_preds_bin <- ifelse(full_mod_preds > 0.5, 1, 0)
@@ -164,7 +165,8 @@ The performance of the first model was relatively good. Its overall accuracy was
 The performance of the second logistic regression model was better. Its overall accuracy was 79.87%. The false positive rate was still 5.7% and the false negative rate dropped slightly to 51% which is still very high. Overall, this model was a good start to see that we can get close to 80% accuracy with the variables in the better logistic regression model.The sensitivity for this model is 0.4898.
 
 The second model is what we will use moving forward in combination models.
-(2) kNN Model
+
+## (2) kNN Model
 ```{r}
 #Get rid of the age column and make outcome and the age_level variables as factors
 diabetes_test$Age <- NULL
@@ -249,8 +251,8 @@ confusionMatrix(as.factor(knn_model_3), as.factor(diabetes_test_label), positive
 
 We tried to produce the KNN Model by trying different K values. After evaluating the three models with k values ~ 25, 33, and 17, we found that k value 17 produces the highest accuracy rate (0.8052) and Kappa value (0.5306). The false positive rate is 10.5% and the false negative rate is 38.8%. This outcome is also better than the model with k value 25 (false positive: 12.4% & false negative: 42.9%) and k value 33 (false positive: 13.3% & false negative: 44.9%). Model 3 also has the highest sensitivity among the three kNN models, catching 59.18% of the diabetic patients (a lot more than chance).This indicates that model 3 is the best in detecting false positives and false negatives as well. Overall, model 3 is the model that has the best performance. To apply this data into our diabetes diagnosis. False positive could be harmful as it could cause unnecessary anxiety and psychological distress for the healthy individuals. False negative could also be harmful as it provides a false sense of security and prevents patients from getting early treatment. Since model 3 has the lowest false positive and false negative rates, it's the best among all to prevent false positive and false negatives from happening. 
 
-(3) ANN model 
-#1.Import and clean dataset
+## (3) ANN model 
+### 1.Import and clean dataset
 ```{r}
 #Read in the dataset
 diabetes_test <- read.csv("diabetes_test.csv")
@@ -280,7 +282,7 @@ diabetes_train_ANN_labels <- diabetes_train$Outcome #the y variable of train dat
 diabetes_test_ANN_labels <- diabetes_test$Outcome #the y variable of test data set
 ```
 
-#2.Build ANN model
+### 2.Build ANN model
 ```{r}
 # train the neuralnet model
 library(neuralnet)
@@ -296,7 +298,7 @@ str(diabetes_model)
 ```
 From the plot, we can see pregnancies, glucose, blood pressure and etc are input variables, which are located on the left of the plot. The numbers on the black line that is pointing toward the center are weights of respective inputs.For example, 1.40599 is the weight of pregnancies in the model. The blue is the bias, which is summed with the weighted inputs to form the net inputs. Bias and weights are both adjustable parameters of the neuron. 
 
-#3.Predict outcome using Basic ANN model
+### 3.Predict outcome using Basic ANN model
 ```{r}
 diabetes_test_ANN_predict <- predict(diabetes_model,diabetes_test_ANN_norm,type = "response")
 diabetes_test_ANN_predict <- ifelse(diabetes_test_ANN_predict > 0.5, 1, 0) #make it binary 
@@ -312,7 +314,7 @@ confusionMatrix(as.factor(diabetes_test_ANN_predict),as.factor(diabetes_test_ANN
 ```
 From the confusion matrix, we can see that there are 27 false positive meaning there are 27 people who are not diabetes patient but the model predicted them to be diabetic. There are 10 false negative meaning that there are 10 people who actually got diabetes but the model did not predict them to be. From the business standpoint, we hope to reduce the false false negative number as much as possible since we do not want to miss the opportunity to help them prevent diabetes in advance. We can also see that the accuracy for this model is 0.7597 with kappa value of 0.4932. The sensitivity of the model is very high compared to the logistic regression model, successfully diagnosing 79.59% of the diabetic patients. 
 
-#4. Improve ANN Model
+### 4. Improve ANN Model
 ```{r}
 # train the neuralnet model
 library(neuralnet)
@@ -327,7 +329,7 @@ plot(diabetes_model2)
 ```
 From the plot, we can see pregnancies, glucose, blood pressure and etc are input variables, which are located on the left of the plot. The numbers on the black line that is pointing toward the center are weights of respective inputs.In this model, we increase the number of hidden neutrons to 2. Therefore, we have two nodes before the outcome. This would help build a more complex model. The blue is the bias, which is summed with the weighted inputs to form the net inputs. Bias and weights are both adjustable parameters of the neuron. 
 
-#5.Predict outcome using Improved ANN model
+### 5.Predict outcome using Improved ANN model
 ```{r}
 diabetes_test_ANN_predict2 <- predict(diabetes_model2,diabetes_test_ANN_norm,type = "response")
 diabetes_test_ANN_predict2 <- ifelse(diabetes_test_ANN_predict2 > 0.5, 1, 0) #make it binary 
@@ -343,7 +345,7 @@ confusionMatrix(as.factor(diabetes_test_ANN_predict2),as.factor(diabetes_test_AN
 ```
 From the confusion matrix, we can see that there are 23 false positive meaning there are 23 people who are not diabetes patient but the model predicted them to be diabetic. This is improved from 27 false positive outcomes. There are 13 false negative meaning that there are 13 people who actually got diabetes but the model did not predict them to be. This is worse than the basic model which has 10 false negative outcomes. From the business standpoint, we hope to reduce the false false negative number as much as possible since we do not want to miss the opportunity to help them prevent diabetes in advance. We can also see that the accuracy for this model is 0.7662 with kappa value of 0.489. The accuracy for this improved model is higher than that of the basic one. However, the sensitivity of the improved ANN model decreased compare to the basic ANN model by 6.12%. 
 
-#6. Trying to build better ANN by increasing hidden neurons
+### 6. Trying to build better ANN by increasing hidden neurons
 ```{r}
 # train the neuralnet model
 library(neuralnet)
@@ -371,8 +373,8 @@ confusionMatrix(as.factor(diabetes_test_ANN_predict3),as.factor(diabetes_test_AN
 In this model, we tried to increase the hidden neutrons to 10 to see whether it would significantly improve the result. However, from the confusion matrix, we see that there are no difference between the model with 2 hidden neurons and the one with 10. Therefore, we concluded that no matter how many hidden neurons we increase from 2, the result will always be the same. Among the three ANN models, the model with the highest sensitivity is the basic ANN model, so we are going to use the first ANN model when we build our stacked model later. 
 
 
-(4) Decision Tree Model 
-Read train and test data set 
+## (4) Decision Tree Model 
+### Read train and test data set 
 ```{r}
 diabetes_train <- read.csv("diabetes_train.csv")
 diabetes_test <- read.csv("diabetes_test.csv")
@@ -430,8 +432,8 @@ confusionMatrix(as.factor(tree_model_predict_improve100),as.factor(diabetes_test
 The false positive rate of the improved decision tree model with 100 trials is 39.6% (19/48) (which is higher than the original model which is 36.5%) and the false negative rate of the model is 18.9% (20/106) (which is lower than the original model which is 20.35%). The kappa value of the improved model increased by less than 1% while the accuracy rate decreased by less than 1%.However, the sensitivity of the improved decision tree model is increase by about 6% compared to the original model and 9% increased compared to the improved model using 10 trials. So overall, we would prefer the improved decision tree model with 100 trials for our stacked model. The original model has a lower false positive rate while the improved model has a lower false negative rate. So in an application standpoint, using the original model to predict diabetes will more likely cause diabetes to be undetected and using the improved model to predict will more likely cause unnecessary anxiety for healthy people as they are falsely diagnosed with diabetes by the improved model and the goal of this project in particular is to diagnose diabetes accurately. 
 
 
-(5) Support Vector Model 
-## Get Data
+## (5) Support Vector Model 
+### Get Data
 ```{r}
 diabetes_train$Age <- NULL
 diabetes_test$Age <- NULL
@@ -441,7 +443,7 @@ diabetes_test$age_level <- as.factor(diabetes_test$age_level)
 summary(diabetes_train)
 ```
 
- Build SVM model
+Build SVM model
 ```{r}
 library(kernlab)
 svm_mod <- ksvm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, kernel = "vanilladot", )
@@ -470,7 +472,7 @@ The accuracy for the improved SVM model is (94 + 27) / (94 + 27 +22+11) = 78.57%
 
 Moving forward, we would plan to stick with the vanilladot kernel instead of rbfdot in models we build that also use the existing SVM.
 
-(6) Random Forest
+## (6) Random Forest
 ```{r}
 library(randomForest)
 library(datasets)
@@ -482,9 +484,9 @@ confusionMatrix(as.factor(rf_model_predict),as.factor(diabetes_test$Outcome), po
 ```
 The false positive rate of the random forest model with 100 trials is 6.7%% (15/90) and the false negative rate of the model is 46.9% (23/49). The kappa value of the model is 0.4050, which means this model is 40% more accurate than a randomly generated model. The accuracy is 75.32%. The sensitivity of the random forest model is 53.06%, meaning this model can detect the diabetes patient 53.06% of the time. 
 
-Part 3: Stacked model 
+# Part 3: Stacked model 
 
-(a)Combine the predictions of all of the individual models of the test data and make a new data frame.  
+## (a)Combine the predictions of all of the individual models of the test data and make a new data frame.  
 ```{r}
 diabetes_combine <- data.frame(sig_mod_preds_bin,knn_model_3,diabetes_test_ANN_predict,tree_model_predict_improve100,svm_preds,rf_model_predict,diabetes_test$Outcome, row.names = NULL)
 names(diabetes_combine)[1]<- "Logistic_Predict"
@@ -497,7 +499,7 @@ names(diabetes_combine)[7]<- "Actual_Diagnosis"
 diabetes_combine
 ```
 
-(b) Split test and train data from using the combined data frame with individual model predictions
+## (b) Split test and train data from using the combined data frame with individual model predictions
 ```{r}
 #Selects 31 random rows for test data (20% of the total data rows we have)
 set.seed(414)
@@ -508,7 +510,7 @@ diabetes_test_stack <- diabetes_combine[test_set_stack,]
 str(diabetes_test_stack)
 ```
 
-(c) Build a decision tree model using the stack model train data 
+## (c) Build a decision tree model using the stack model train data 
 ```{r}
 library(C50)
 stack_model <- C5.0(diabetes_train_stack[-7], as.factor(diabetes_train_stack$Actual_Diagnosis))
@@ -525,7 +527,7 @@ The accuracy rate for the logistic regression model, decision tree model, KNN mo
 
 
 
-Part 4: Conclusion 
+# Part 4: Conclusion 
 The purpose of our project is to create a model predicting whether someone has diabetes based on parameters including # of pregnancies (for females), glucose level, blood pressure, thickness of skin, insulin level, BMI, age, and diabetes pedigree function (likelihood of diabetes based on family history). The main criteria of choosing the best model is the ability to accurately diagnose all of the diabetic patient and that is measured by sensitivity (which represents how many percent of diabetic patients are successfully diagnosed by the model).
 
 Based on the six individual models and the stacked model, the models that can diagnose more than half of the existing diabetic patients (sensitivity > 50%, better than chance) are kNN model, ANN model, Decision Tree model, and SVM model. Among these four models. SVM model has the highest accuracy rate (81.17%) and the highest kappa value (0.5329). So overall, our group concludes that SVM model is the best model to be used to predict diabetes since it has an ability to detect existing diabetic patients better than chance, the highest accuracy rate among all seven models, and a relatively high kappa value (meaning it is better than a randomly generated model). 
