@@ -155,8 +155,12 @@ confusionMatrix(as.factor(sig_mod_preds_bin), as.factor(diabetes_test$Outcome), 
 CrossTable(x = diabetes_test$Outcome, y = sig_mod_preds_bin, props.chisq = FALSE)
 ```
 We started out by building a full logistic regression model containing all of the variables that we could use to predict the outcome of diabetes in an individual. Next, we tried to improve this model by focusing on variables that were significant and also adding an interaction effect between age and blood pressure. We experimented with a few different interaction effects, and that was the one that ended up improving model performance.
-The performance of the first model was relatively good. Its overall accuracy was 79.22%. The false positive rate was 5.7% which is low and the false negative rate was 53% which is quite high. We still thought this performance could be improved. Based on the regression output of the model, we removed some variables and added an interaction term.
-The performance of the second logistic regression model was better. Its overall accuracy was 79.87%. The false positive rate was still 5.7% and the false negative rate dropped slightly to 51% which is still very high. Overall, this model was a good start to see that we can get close to 80% accuracy with the variables in the better logistic regression model.
+
+The performance of the first model was relatively good. Its overall accuracy was 79.22%. The false positive rate was 5.7% which is low and the false negative rate was 53% which is quite high. We still thought this performance could be improved. Based on the regression output of the model, we removed some variables and added an interaction term. THe sensitivity for the first model is 0.4694. 
+
+The performance of the second logistic regression model was better. Its overall accuracy was 79.87%. The false positive rate was still 5.7% and the false negative rate dropped slightly to 51% which is still very high. Overall, this model was a good start to see that we can get close to 80% accuracy with the variables in the better logistic regression model.The sensitivity for this model is 0.4898.
+
+The second model is what we will use moving forward in combination models.
 (2) kNN Model
 ```{r}
 #Get rid of the age column and make outcome and the age_level variables as factors
@@ -446,7 +450,7 @@ library(caret)
 CrossTable(x = diabetes_test$Outcome, y = svm_preds, props.chisq = FALSE)
 confusionMatrix(as.factor(svm_preds),as.factor(diabetes_test$Outcome), positive = "1")
 ```
-We started out by building an SVM that contained the significant variables from our logistic regression model as well as the interaction term that we had added. The accuracy for this model is (97 + 28) / (97 + 28 + 8 + 21) = 81.17%. The false positive rate is 7.62% and the false negative rate is 42.86%. It is good to see the false negative rate come down from other models, because that represents a dangerous situation for diabetes patients. These represent improvements above other models that we had tried, including our basic logistic regression.
+We started out by building an SVM that contained the significant variables from our logistic regression model as well as the interaction term that we had added. The accuracy for this model is (97 + 28) / (97 + 28 + 8 + 21) = 81.17%. The false positive rate is 7.62% and the false negative rate is 42.86%. It is good to see the false negative rate come down from other models, because that represents a dangerous situation for diabetes patients. The sensitivity for this model is 0.5714. These represent improvements above other models that we had tried, including our basic logistic regression.
 
 Now, we will try to improve the SVM model by using a different kernel.
 ```{r}
@@ -459,7 +463,9 @@ library(gmodels)
 CrossTable(x = diabetes_test$Outcome, y = svm_preds_improve, props.chisq = FALSE)
 confusionMatrix(as.factor(svm_preds_improve),as.factor(diabetes_test$Outcome), positive = "1")
 ```
-The accuracy for the improved SVM model is (94 + 27) / (94 + 27 +22+11) = 78.57%. The false positive rate is 10.45% and the false negative rate is 44.88%. This represents a worse performance than the initial SVM model because accuracy went down and the false negative rate increased. Moving forward, we would plan to stick with the vanilladot kernel instead of rbfdot in models we build that also use the existing SVM.
+The accuracy for the improved SVM model is (94 + 27) / (94 + 27 +22+11) = 78.57%. The false positive rate is 10.45% and the false negative rate is 44.88%. This represents a worse performance than the initial SVM model because accuracy went down and the false negative rate increased. The sensitivity for this model is also 0.5510.
+
+Moving forward, we would plan to stick with the vanilladot kernel instead of rbfdot in models we build that also use the existing SVM.
 
 (6) Random Forest
 ```{r}
