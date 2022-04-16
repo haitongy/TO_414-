@@ -446,9 +446,9 @@ library(caret)
 CrossTable(x = diabetes_test$Outcome, y = svm_preds, props.chisq = FALSE)
 confusionMatrix(as.factor(svm_preds),as.factor(diabetes_test$Outcome), positive = "1")
 ```
-The accuracy for this model is (97 + 28) / (97 + 28 + 8 + 21) = 81.17%.
+We started out by building an SVM that contained the significant variables from our logistic regression model as well as the interaction term that we had added. The accuracy for this model is (97 + 28) / (97 + 28 + 8 + 21) = 81.17%. The false positive rate is 7.62% and the false negative rate is 42.86%. It is good to see the false negative rate come down from other models, because that represents a dangerous situation for diabetes patients. These represent improvements above other models that we had tried, including our basic logistic regression.
 
-Now, we will try to improve the SVM model by using a different kernel
+Now, we will try to improve the SVM model by using a different kernel.
 ```{r}
 library(kernlab)
 svm_mod_improve <- ksvm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, kernel = "rbfdot", )
@@ -459,7 +459,7 @@ library(gmodels)
 CrossTable(x = diabetes_test$Outcome, y = svm_preds_improve, props.chisq = FALSE)
 confusionMatrix(as.factor(svm_preds_improve),as.factor(diabetes_test$Outcome), positive = "1")
 ```
-The accuracy for the improved SVM model is (94 + 27) / (94 + 27 +22+11) = 78.57%.
+The accuracy for the improved SVM model is (94 + 27) / (94 + 27 +22+11) = 78.57%. The false positive rate is 10.45% and the false negative rate is 44.88%. This represents a worse performance than the initial SVM model because accuracy went down and the false negative rate increased. Moving forward, we would plan to stick with the vanilladot kernel instead of rbfdot in models we build that also use the existing SVM.
 
 (6) Random Forest
 ```{r}

@@ -23,12 +23,14 @@ summary(diabetes_train)
 # Build SVM model
 ```{r}
 library(kernlab)
-svm_mod <- ksvm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, kernel = "vanilladot", )
+svm_mod <- ksvm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + age_level + age_level * BloodPressure, data = diabetes_train, kernel = "rbfdot", )
 svm_preds <- predict(svm_mod, diabetes_test)
 svm_preds <- ifelse(svm_preds > 0.5, 1, 0)
 
 
 library(gmodels)
 CrossTable(x = diabetes_test$Outcome, y = svm_preds, props.chisq = FALSE)
+confusionMatrix(as.factor(svm_preds),as.factor(diabetes_test$Outcome), positive = "1")
+
 ```
 > The accuracy for this model is (97 + 28) / (97 + 28 + 8 + 21) = 81.17%.
